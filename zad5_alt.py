@@ -2,13 +2,14 @@ import sys
 import random
 
 from glfw.GLFW import *
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
 import numpy as np
 
 def startup():
-    update_viewport(None, 400, 400)
+    update_viewport(None, 600, 600)
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glEnable(GL_DEPTH_TEST)
 
@@ -46,36 +47,49 @@ def draw_triangle(v1, v2, v3):
     glEnd()
 
 
-# Funkcja rysująca czworościan, składający się z 4 trójkątów
-def draw_tetrahedron(vertices):
+# Funkcja rysująca ostrosłup kwadratowy
+def draw_pyramid(vertices):
+    # Podstawa - dwa dopełniające się trójkąty
     draw_triangle(vertices[0], vertices[1], vertices[2])
-    draw_triangle(vertices[0], vertices[1], vertices[3])
     draw_triangle(vertices[0], vertices[2], vertices[3])
-    draw_triangle(vertices[1], vertices[2], vertices[3])
+
+    # Ściany boczne ostrosłupa
+    draw_triangle(vertices[0], vertices[1], vertices[4])
+    draw_triangle(vertices[1], vertices[2], vertices[4])
+    draw_triangle(vertices[2], vertices[3], vertices[4])
+    draw_triangle(vertices[3], vertices[0], vertices[4])
 
 
-# Funkcja rekurencyjna do generowania trójkąta Sierpińskiego w 3D
+# Funkcja rekurencyjna do generowania ostrosłupa Sierpińskiego
 def sierpinski_3d(vertices, level):
     if level == 0:
-        draw_tetrahedron(vertices)
+        draw_pyramid(vertices)
     else:
-        # Wyznaczenie punktów środkowych dla każdego boku czworościanu
-        midpoints = [
+        # Punkty środkowe dla krawędzi podstawy kwadratu
+        midpoints_base = [
             (vertices[0] + vertices[1]) / 2,
-            (vertices[0] + vertices[2]) / 2,
-            (vertices[0] + vertices[3]) / 2,
             (vertices[1] + vertices[2]) / 2,
-            (vertices[1] + vertices[3]) / 2,
             (vertices[2] + vertices[3]) / 2,
+            (vertices[3] + vertices[0]) / 2
         ]
 
-        # 4 nowe czworościany
-        sierpinski_3d([vertices[0], midpoints[0], midpoints[1], midpoints[2]], level - 1)
-        sierpinski_3d([vertices[1], midpoints[0], midpoints[3], midpoints[4]], level - 1)
-        sierpinski_3d([vertices[2], midpoints[1], midpoints[3], midpoints[5]], level - 1)
-        sierpinski_3d([vertices[3], midpoints[2], midpoints[4], midpoints[5]], level - 1)
-        #sierpinski_3d([vertices[0], midpoints[1], midpoints[2], midpoints[5]], level - 1)
+        # Środek podstawy
+        center_base = (vertices[0] + vertices[1] + vertices[2] + vertices[3]) / 4
 
+        # Punkty środkowe - leżące w połowie wysokościc ostrosłupa
+        top_0 = (vertices[0] + vertices[4]) / 2
+        top_1 = (vertices[1] + vertices[4]) / 2
+        top_2 = (vertices[2] + vertices[4]) / 2
+        top_3 = (vertices[3] + vertices[4]) / 2
+
+        # Cztery narożne ostrosłupy
+        sierpinski_3d([vertices[0], midpoints_base[0], center_base, midpoints_base[3], top_0], level - 1)
+        sierpinski_3d([midpoints_base[0], vertices[1], midpoints_base[1], center_base, top_1], level - 1)
+        sierpinski_3d([center_base, midpoints_base[1], vertices[2], midpoints_base[2], top_2], level - 1)
+        sierpinski_3d([midpoints_base[3], center_base, midpoints_base[2], vertices[3], top_3], level - 1)
+
+        # Centralny ostrosłup
+        sierpinski_3d([top_0, top_1, top_2, top_3, vertices[4]], level - 1)
 
 
 def render(time):
@@ -85,18 +99,16 @@ def render(time):
     spin(time * 180 / 3.1415)
     axes()
 
-    # Wierzchołki czworościanu
     vertices = np.array([
-        [-5.0, -5.0, -5.0],
-        [5.0, -5.0, -5.0],
-        [0.0, 5.0, -5.0],
-        [0.0, 0.0, 5.0]
+        [-3.0, -3.0, -2.5],
+        [3.0, -3.0, -2.5],
+        [3.0, 3.0, -2.5],
+        [-3.0, 3.0, -2.5],
+        [0.0, 0.0, 6.0*np.sqrt(2)-2.5]
     ])
-
-    sierpinski_3d(vertices, 4)
+    sierpinski_3d(vertices, 3)
 
     glFlush()
-
 
 def update_viewport(window, width, height):
     if width == 0:
@@ -116,7 +128,6 @@ def update_viewport(window, width, height):
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-
 
 def main():
     if not glfwInit():
