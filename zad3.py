@@ -41,7 +41,7 @@ def axes():
     glEnd()
 
 # Globalna zmienna do przechowywania liczby punktow (N x N x 3)
-N = 10
+N = 20
 
 # Zmienna globalna - tablica do przechowywania losowych kolorow wierzcholkow
 colors = np.zeros((N, N, 3))
@@ -96,14 +96,15 @@ def render(time):
             glColor3f(colors[i, j+1, 0], colors[i, j+1, 1], colors[i, j+1, 2])
             glVertex3f(tab[i, j + 1, 0], tab[i, j + 1, 1], tab[i, j + 1, 2])
 
+
             # Trójkąt dopełniający - między punktami (i+1, j), (i+1, j+1), (i, j+1)
-            glColor3f(colors[i+1, j, 0], colors[i+1, j, 1], colors[i+1, j, 2])
+            glColor3f(colors[i + 1, j, 0], colors[i + 1, j, 1], colors[i + 1, j, 2])
             glVertex3f(tab[i + 1, j, 0], tab[i + 1, j, 1], tab[i + 1, j, 2])
 
             glColor3f(colors[i+1, j+1, 0], colors[i+1, j+1, 1], colors[i+1, j+1, 2])
             glVertex3f(tab[i + 1, j + 1, 0], tab[i + 1, j + 1, 1], tab[i + 1, j + 1, 2])
 
-            glColor3f(colors[i, j+1, 0], colors[i, j+1, 1], colors[i, j+1, 2])
+            glColor3f(colors[i, j + 1, 0], colors[i, j + 1, 1], colors[i, j + 1, 2])
             glVertex3f(tab[i, j + 1, 0], tab[i, j + 1, 1], tab[i, j + 1, 2])
 
     glEnd()

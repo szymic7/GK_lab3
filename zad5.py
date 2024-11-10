@@ -1,18 +1,16 @@
 import sys
+import random
 
 from glfw.GLFW import *
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
 import numpy as np
 
-
 def startup():
     update_viewport(None, 400, 400)
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glEnable(GL_DEPTH_TEST)
-
 
 def shutdown():
     pass
@@ -24,70 +22,76 @@ def spin(angle):
 
 def axes():
     glBegin(GL_LINES)
-
     glColor3f(1.0, 0.0, 0.0)
     glVertex3f(-7.5, 0.0, 0.0)
     glVertex3f(7.5, 0.0, 0.0)
-
     glColor3f(0.0, 1.0, 0.0)
     glVertex3f(0.0, -7.5, 0.0)
     glVertex3f(0.0, 7.5, 0.0)
-
     glColor3f(0.0, 0.0, 1.0)
     glVertex3f(0.0, 0.0, -7.5)
     glVertex3f(0.0, 0.0, 7.5)
-
     glEnd()
 
-def generate_egg(n):
-    tab = np.zeros((n, n, 3))
 
-    # Równomierne rozłożenie wartości dla parametrów u i v
-    u_values = np.linspace(0.0, 1.0, n)
-    v_values = np.linspace(0.0, 1.0, n)
+# Funkcja pomocnicza do rysowania trójkąta w trójwymiarze
+def draw_triangle(v1, v2, v3):
+    glColor3f(random.random(), random.random(), random.random())
+    glBegin(GL_TRIANGLES)
+    glVertex3f(*v1)
+    glVertex3f(*v2)
+    glVertex3f(*v3)
+    glEnd()
 
-    # Wypełnianie tablicy współrzędnymi x, y, z dla każdej pary (u, v)
-    for i, u in enumerate(u_values):
-        for j, v in enumerate(v_values):
-            x = (-90 * u ** 5 + 225 * u ** 4 - 270 * u ** 3 + 180 * u ** 2 - 45 * u) * np.cos(np.pi * v)
-            y = 160 * u ** 4 - 320 * u ** 3 + 160 * u ** 2 - 5
-            z = (-90 * u ** 5 + 225 * u ** 4 - 270 * u ** 3 + 180 * u ** 2 - 45 * u) * np.sin(np.pi * v)
-            tab[i, j] = [x, y, z]
 
-    return tab
+# Funkcja rysująca czworościan, składający się z 4 trójkątów
+def draw_tetrahedron(vertices):
+    draw_triangle(vertices[0], vertices[1], vertices[2])
+    draw_triangle(vertices[0], vertices[1], vertices[3])
+    draw_triangle(vertices[0], vertices[2], vertices[3])
+    draw_triangle(vertices[1], vertices[2], vertices[3])
 
-# Globalna zmienna do przechowywania liczby punktow (N x N x 3)
-N = 20
+
+# Funkcja rekurencyjna do generowania trójkąta Sierpińskiego w 3D
+def sierpinski_3d(vertices, depth):
+    if depth == 0:
+        draw_tetrahedron(vertices)
+    else:
+        # Wyznaczenie punktów środkowych dla każdego boku czworościanu
+        midpoints = [
+            (vertices[0] + vertices[1]) / 2,
+            (vertices[0] + vertices[2]) / 2,
+            (vertices[0] + vertices[3]) / 2,
+            (vertices[1] + vertices[2]) / 2,
+            (vertices[1] + vertices[3]) / 2,
+            (vertices[2] + vertices[3]) / 2,
+        ]
+
+        # 4 nowe czworościany
+        sierpinski_3d([vertices[0], midpoints[0], midpoints[1], midpoints[2]], depth - 1)
+        sierpinski_3d([vertices[1], midpoints[0], midpoints[3], midpoints[4]], depth - 1)
+        sierpinski_3d([vertices[2], midpoints[1], midpoints[3], midpoints[5]], depth - 1)
+        sierpinski_3d([vertices[3], midpoints[2], midpoints[4], midpoints[5]], depth - 1)
+
 
 def render(time):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
     spin(time * 180 / 3.1415)
-
     axes()
 
-    tab = generate_egg(N)
+    # Wierzchołki czworościanu
+    vertices = np.array([
+        [-5.0, -5.0, -5.0],
+        [5.0, -5.0, -5.0],
+        [0.0, 5.0, -5.0],
+        [0.0, 0.0, 5.0]
+    ])
 
-    glColor3f(1.0, 1.0, 0.0)
-    glBegin(GL_LINES)
-
-    for i in range(N - 1):
-        for j in range(N - 1):
-
-            # Linia pomiędzy (i, j) a (i+1, j)
-            glVertex3f(tab[i, j, 0], tab[i, j, 1], tab[i, j, 2])
-            glVertex3f(tab[i + 1, j, 0], tab[i + 1, j, 1], tab[i + 1, j, 2])
-
-            # Linia pomiędzy (i, j) a (i, j+1)
-            glVertex3f(tab[i, j, 0], tab[i, j, 1], tab[i, j, 2])
-            glVertex3f(tab[i, j + 1, 0], tab[i, j + 1, 1], tab[i, j + 1, 2])
-
-    glEnd()
-
+    sierpinski_3d(vertices, 4)
 
     glFlush()
-
 
 def update_viewport(window, width, height):
     if width == 0:
@@ -107,7 +111,6 @@ def update_viewport(window, width, height):
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-
 
 def main():
     if not glfwInit():
@@ -130,7 +133,6 @@ def main():
     shutdown()
 
     glfwTerminate()
-
 
 if __name__ == '__main__':
     main()

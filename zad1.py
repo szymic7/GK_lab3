@@ -66,7 +66,7 @@ def render(time):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
-    spin(time * 180 / 3.1415)
+    #spin(time * 180 / 3.1415)
 
     axes()
 
